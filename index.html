@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ngự Sử Kinh Thành - Đồ Án Tốt Nghiệp Game 2D</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,600&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background: radial-gradient(circle at center, #2c1810 0%, #120b08 100%);
+      font-family: 'Quicksand', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #f5f5f5;
+      overflow: hidden;
+      padding: 10px;
+    }
+
+    .game-wrapper {
+      position: relative;
+      width: 800px;
+      height: 500px;
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.25);
+      border: 4px solid #b8860b;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #d7ccc8;
+    }
+
+    canvas {
+      display: block;
+      width: 800px;
+      height: 500px;
+      background-color: #d7ccc8;
+    }
+
+    /* ==================== 2. GIAO DIỆN UI CHỈ SỐ ==================== */
+    #top-ui {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      background: linear-gradient(180deg, rgba(20, 10, 5, 0.95) 0%, rgba(20, 10, 5, 0.8) 75%, transparent 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 18px 12px 18px;
+      z-index: 10;
+      pointer-events: none;
+      font-family: 'Cinzel', serif;
+    }
+
+    .ui-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 215, 0, 0.35);
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .phone-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: bold;
+      color: #00e676;
+      transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .phone-badge.low-battery {
+      color: #ff1744 !important;
+      animation: pulse-red 1s infinite alternate;
+    }
+
+    .phone-icon-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      font-size: 14px;
+    }
+
+    .progress-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 175px;
+    }
+
+    .bar-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .bar-outer {
+      width: 100%;
+      height: 10px;
+      background: rgba(40, 40, 40, 0.85);
+      border-radius: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 50%;
+      border-radius: 4px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s;
+    }
+
+    #court-fill {
+      background: linear-gradient(90deg, #1565c0, #42a5f5);
+      box-shadow: 0 0 8px #1e88e5;
+    }
+
+    #spy-fill {
+      background: linear-gradient(90deg, #c62828, #ff5252);
+      box-shadow: 0 0 8px #d32f2f;
+    }
+
+    /* Gợi ý tương tác Space */
+    #interact-hint {
+      position: absolute;
+      top: 220px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: #ffd700;
+      border: 2px solid #ffd700;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8), 0 0 12px rgba(255, 215, 0, 0.5);
+      animation: float-hint 1.4s ease-in-out infinite alternate;
+      z-index: 15;
+      pointer-events: none;
+    }
+
+    /* ==================== 3. KHUNG THOẠI DIALOGUEBOX ==================== */
+    #dialogue-box {
+      position: absolute;
+      bottom: 12px;
+      left: 16px;
+      right: 16px;
+      min-height: 175px;
+      background: linear-gradient(135deg, rgba(28, 16, 12, 0.96) 0%, rgba(15, 8, 5, 0.98) 100%);
+      border: 2px solid #ffd700;
+      border-radius: 8px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(255, 215, 0, 0.15);
+      padding: 14px 20px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 30;
+      animation: slide-up 0.3s ease-out;
+    }
+
+    .dialogue-speaker-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      align-self: flex-start;
+      background: linear-gradient(90deg, #8b0000, #b71c1c);
+      color: #ffd700;
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      padding: 4px 14px;
+      border-radius: 4px;
+      border: 1px solid #ffd700;
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      margin-bottom: 8px;
+    }
+
+    .speaker-phone {
+      background: linear-gradient(90deg, #0d47a1, #1976d2) !important;
+      color: #e0f2fe !important;
+      border-color: #64b5f6 !important;
+    }
+
+    .dialogue-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      line-height: 1.5;
+      color: #fff9e6;
+      margin-bottom: 12px;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    }
+
+    .options-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .dialogue-btn {
+      background: linear-gradient(90deg, rgba(60, 30, 20, 0.85) 0%, rgba(90, 45, 25, 0.85) 100%);
+      color: #fff;
+      border: 1px solid #c8963e;
+      border-radius: 5px;
+      padding: 8px 14px;
+      text-align: left;
+      font-family: 'Quicksand', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dialogue-btn:hover {
+      background: linear-gradient(90deg, #8b0000 0%, #b71c1c 100%);
+      border-color: #ffd700;
+      color: #ffd700;
+      transform: translateX(4px);
+      box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+    }
+
+    .dialogue-btn.btn-hidden-d {
+      background: linear-gradient(90deg, #1b5e20 0%, #2e7d32 100%);
+      border-color: #a5d6a7;
+      color: #e8f5e9;
+      font-weight: 700;
+      animation: pulse-green 1.5s infinite alternate;
+    }
+
+    .dialogue-btn.btn-hidden-d:hover {
+      background: linear-gradient(90deg, #2e7d32 0%, #388e3c 100%);
+      border-color: #ffd700;
+      color: #ffd700;
+    }
+
+    .dialogue-btn.btn-continue {
+      background: linear-gradient(90deg, #d4af37, #aa8010);
+      color: #120b08;
+      font-weight: 800;
+      text-align: center;
+      justify-content: center;
+      border: 1px solid #fff;
+      font-family: 'Cinzel', serif;
+      letter-spacing: 1px;
+    }
+
+    .dialogue-btn.btn-continue:hover {
+      background: linear-gradient(90deg, #ffd700, #d4af37);
+      color: #000;
+      transform: scale(1.02);
+    }
+
+    /* ==================== 4. MINI-GAME GIẢI MẬT MÃ CAESAR ==================== */
+    #puzzle-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 480px;
+      background: radial-gradient(circle at center, #2e1810 0%, #1a0b06 100%);
+      border: 3px solid #ffd700;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(255, 215, 0, 0.3);
+      padding: 24px 28px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      z-index: 40;
+      animation: pop-in 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+
+    .puzzle-header {
+      text-align: center;
+    }
+
+    .puzzle-title {
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      font-weight: 900;
+      color: #ffd700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .puzzle-subtitle {
+      font-size: 12px;
+      color: #d7ccc8;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .cipher-original-badge {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px dashed rgba(255, 215, 0, 0.6);
+      border-radius: 6px;
+      padding: 6px 18px;
+      font-size: 13px;
+      color: #ffcc80;
+    }
+
+    .cipher-original-badge span {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #ffab40;
+      font-family: 'Cinzel', serif;
+    }
+
+    .letter-display-box {
+      display: flex;
+      gap: 14px;
+      margin: 4px 0;
+    }
+
+    .letter-card {
+      width: 60px;
+      height: 70px;
+      background: linear-gradient(145deg, #3d1f14, #1f0d07);
+      border: 2px solid #ffd700;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 32px;
+      font-weight: 900;
+      color: #fff;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.7), inset 0 0 10px rgba(255, 215, 0, 0.2);
+      transition: transform 0.15s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .shift-controller {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      border-radius: 30px;
+      padding: 4px 14px;
+    }
+
+    .shift-btn {
+      background: #8b0000;
+      color: #ffd700;
+      border: 1px solid #ffd700;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .shift-btn:hover {
+      background: #b71c1c;
+      transform: scale(1.1);
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .shift-value-display {
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffd700;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .puzzle-instructions {
+      font-size: 11.5px;
+      color: #b0bec5;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .puzzle-error-msg {
+      font-size: 12px;
+      color: #ff5252;
+      font-weight: 700;
+      min-height: 16px;
+      text-align: center;
+    }
+
+    .btn-confirm-cipher {
+      background: linear-gradient(135deg, #d4af37 0%, #aa8010 100%);
+      color: #120b08;
+      border: 2px solid #ffffff;
+      border-radius: 6px;
+      padding: 10px 30px;
+      font-family: 'Cinzel', serif;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-confirm-cipher:hover {
+      background: linear-gradient(135deg, #ffd700 0%, #d4af37 100%);
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+    }
+
+    /* ==================== 5. MODAL KẾT THÚC (THẮNG / THUA) ==================== */
+    #end-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 5, 3, 0.92);
+      backdrop-filter: blur(6px);
+      z-index: 50;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 40px;
+      text-align: center;
+      animation: fade-in 0.4s ease-out;
+    }
+
+    .end-card {
+      background: linear-gradient(135deg, #2b170e 0%, #150904 100%);
+      border: 3px solid #ffd700;
+      border-radius: 12px;
+      padding: 30px 40px;
+      max-width: 580px;
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 215, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .end-title {
+      font-family: 'Cinzel', serif;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .end-title.victory {
+      color: #ffd700;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    }
+
+    .end-title.defeat {
+      color: #ff3d00;
+      text-shadow: 0 0 20px rgba(255, 61, 0, 0.8);
+    }
+
+    .end-desc {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #f5f5f5;
+    }
+
+    .btn-restart {
+      margin-top: 10px;
+      background: linear-gradient(135deg, #8b0000 0%, #b71c1c 100%);
+      color: #ffd700;
+      border: 2px solid #ffd700;
+      border-radius: 6px;
+      padding: 10px 28px;
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-restart:hover {
+      background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+
+    /* FOOTER HƯỚNG DẪN */
+    .game-footer-tips {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #a1887f;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    .game-footer-tips kbd {
+      background: #3e2723;
+      color: #ffd700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #8d6e63;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    /* Animations */
+    @keyframes pulse-red {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0.6; transform: scale(1.08); }
+    }
+
+    @keyframes pulse-green {
+      0% { box-shadow: 0 0 6px rgba(76, 175, 80, 0.4); }
+      100% { box-shadow: 0 0 14px rgba(76, 175, 80, 0.9); }
+    }
+
+    @keyframes float-hint {
+      0% { transform: translate(-50%, 0); }
+      100% { transform: translate(-50%, -6px); }
+    }
+
+    @keyframes slide-up {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes pop-in {
+      from { transform: translate(-50%, -40%) scale(0.9); opacity: 0; }
+      to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-wrapper" id="game-wrapper">
+    <!-- CANVAS ĐỒ HỌA 800x500 -->
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+    <!-- 2. GIAO DIỆN UI CHỈ SỐ CỐ ĐỊNH Ở GÓC TRÊN -->
+    <div id="top-ui">
+      <!-- 🔋 Điện thoại: bắt đầu 20% (Xanh, <5% đỏ) -->
+      <div class="ui-item">
+        <div class="phone-badge" id="phone-badge">
+          <span class="phone-icon-box">🔋</span>
+          <span>ĐIỆN THOẠI: <strong id="battery-value">20%</strong></span>
+        </div>
+      </div>
+
+      <!-- 👑 Triều Đình: thanh bar dài bắt đầu 50% (Xanh dương) -->
+      <div class="ui-item">
+        <div class="progress-bar-container">
+          <div class="bar-header">
+            <span>👑 TRIỀU ĐÌNH</span>
+            <span id="court-value">50%</span>
+          </div>
+          <div class="bar-outer">
+            <div class="bar-fill" id="court-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🇫🇷 Mật Thám Pháp: thanh bar dài bắt đầu 30% (Đỏ) -->
+      <div class="ui-item">
+        <div class="progress-bar-container">
+          <div class="bar-header">
+            <span>🇫🇷 MẬT THÁM PHÁP</span>
+            <span id="spy-value">30%</span>
+          </div>
+          <div class="bar-outer">
+            <div class="bar-fill" id="spy-fill" style="width: 30%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GỢI Ý TƯƠNG TÁC KHI ĐỨNG GẦN CỬA ĐIỆN -->
+    <div id="interact-hint">
+      <span>⚡ Nhấn [SPACE] để diện kiến Thị Vệ</span>
+    </div>
+
+    <!-- 3. KHUNG THOẠI DIALOGUEBOX Ở DƯỚI CÙNG -->
+    <div id="dialogue-box">
+      <div>
+        <div class="dialogue-speaker-tag" id="dialogue-speaker">Lính Thị Vệ Triều Đình</div>
+        <div class="dialogue-text" id="dialogue-content">
+          Kẻ kia ăn mặc kỳ dị! Tay cầm vật phát sáng tà thuật gì thế kia? Ngươi có phải mật thám phương Tây cử đến không?!
+        </div>
+      </div>
+      <div class="options-grid" id="dialogue-options">
+        <!-- Các nút lựa chọn sẽ được render bằng JS -->
+      </div>
+    </div>
+
+    <!-- 4. MINI-GAME GIẢI MẬT MÃ CAESAR PUZZLEBOX Ở GIỮA -->
+    <div id="puzzle-box">
+      <div class="puzzle-header">
+        <div class="puzzle-title">📜 MẬT THƯ TRIỀU NGUYỄN</div>
+        <div class="puzzle-subtitle">Mật văn của phong trào kháng Pháp bí mật dưới triều Vua Duy Tân</div>
+      </div>
+
+      <div class="cipher-original-badge">
+        Mật văn gốc: <span id="cipher-raw">K X H</span>
+      </div>
+
+      <div class="letter-display-box" id="letter-display-box">
+        <div class="letter-card" id="card-0">K</div>
+        <div class="letter-card" id="card-1">X</div>
+        <div class="letter-card" id="card-2">H</div>
+      </div>
+
+      <div class="shift-controller">
+        <button type="button" class="shift-btn" id="btn-shift-down" title="Giảm độ dịch">▼</button>
+        <div class="shift-value-display" id="shift-display">Độ dịch: 0 bước</div>
+        <button type="button" class="shift-btn" id="btn-shift-up" title="Tăng độ dịch">▲</button>
+      </div>
+
+      <div class="puzzle-instructions">
+        Sử dụng phím mũi tên <strong>Lên / Xuống (▲ / ▼)</strong> trên bàn phím để thay đổi độ dịch chuyển chữ cái (0 - 25).
+      </div>
+
+      <div class="puzzle-error-msg" id="puzzle-error-msg"></div>
+
+      <button type="button" class="btn-confirm-cipher" id="btn-confirm-cipher">XÁC NHẬN GIẢI MÃ</button>
+    </div>
+
+    <!-- 5. MODAL KẾT THÚC GAME OVER / VICTORY -->
+    <div id="end-screen">
+      <div class="end-card">
+        <div class="end-title" id="end-title">KẾT THÚC</div>
+        <div class="end-desc" id="end-desc">Mô tả kết quả</div>
+        <button type="button" class="btn-restart" id="btn-restart">CHƠI LẠI TỪ ĐẦU</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-footer-tips">
+    Di chuyển: <kbd>▲</kbd> <kbd>▼</kbd> <kbd>◀</kbd> <kbd>▶</kbd> hoặc <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> | Tương tác: <kbd>SPACE</kbd>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       HỆ THỐNG ÂM THANH TỔNG HỢP (WEB AUDIO API - KHÔNG CẦN TẢI FILE NGOÀI)
+       ========================================================================== */
+    const Sound = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+      playTone(freq, type = 'sine', duration = 0.1, gainVal = 0.1) {
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(gainVal, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      },
+      step() {
+        this.playTone(180, 'triangle', 0.05, 0.03);
+      },
+      dialogue() {
+        this.playTone(520, 'sine', 0.12, 0.08);
+      },
+      shift() {
+        this.playTone(440, 'square', 0.06, 0.05);
+      },
+      error() {
+        if (!this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.setValueAtTime(110, now + 0.1);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(now + 0.3);
+        } catch (e) {}
+      },
+      victory() {
+        if (!this.ctx) return;
+        const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => {
+            this.playTone(freq, 'triangle', 0.4, 0.15);
+          }, idx * 120);
+        });
+      },
+      defeat() {
+        if (!this.ctx) return;
+        const notes = [311.13, 293.66, 277.18, 246.94];
+        notes.forEach((freq, idx) => {
+          setTimeout(() => {
+            this.playTone(freq, 'sawtooth', 0.4, 0.12);
+          }, idx * 160);
+        });
+      }
+    };
+
+    /* ==========================================================================
+       TRẠNG THÁI TOÀN CỤC CỦA TRÒ CHƠI
+       ========================================================================== */
+    const GameState = {
+      // 2. Giao diện chỉ số
+      battery: 20,    // Bắt đầu 20%
+      court: 50,      // Bắt đầu 50%
+      spy: 30,        // Bắt đầu 30%
+
+      // Trạng thái vận hành
+      mode: 'EXPLORE', // 'EXPLORE' | 'DIALOGUE' | 'PUZZLE' | 'GAME_OVER'
+      canMove: true,
+
+      // Người chơi Ngự Sử
+      player: {
+        x: 400,
+        y: 380,
+        radius: 18,
+        speed: 3.5,
+        color: '#ff1744',
+        starColor: '#ffd700'
+      },
+
+      // Tòa Điện Thái Hòa (Khối chữ nhật cứng va chạm)
+      palace: {
+        x: 80,
+        y: 30,
+        w: 640,
+        h: 175,
+        wallColor: '#8B0000',
+        roofColor: '#FFD700',
+        doorX: 350,
+        doorY: 135,
+        doorW: 100,
+        doorH: 70
+      },
+
+      // Mini-game Caesar
+      cipher: {
+        raw: "KXH",
+        shift: 0,
+        currentDecoded: "KXH"
+      },
+
+      // Bàn phím
+      keys: {}
+    };
+
+    /* ==========================================================================
+       KHỞI TẠO CANVAS VÀ GRAPHICS
+       ========================================================================== */
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // DOM Elements
+    const batteryValEl = document.getElementById('battery-value');
+    const phoneBadgeEl = document.getElementById('phone-badge');
+    const courtValEl = document.getElementById('court-value');
+    const courtFillEl = document.getElementById('court-fill');
+    const spyValEl = document.getElementById('spy-value');
+    const spyFillEl = document.getElementById('spy-fill');
+    const interactHintEl = document.getElementById('interact-hint');
+
+    const dialogueBoxEl = document.getElementById('dialogue-box');
+    const dialogueSpeakerEl = document.getElementById('dialogue-speaker');
+    const dialogueContentEl = document.getElementById('dialogue-content');
+    const dialogueOptionsEl = document.getElementById('dialogue-options');
+
+    const puzzleBoxEl = document.getElementById('puzzle-box');
+    const card0El = document.getElementById('card-0');
+    const card1El = document.getElementById('card-1');
+    const card2El = document.getElementById('card-2');
+    const shiftDisplayEl = document.getElementById('shift-display');
+    const puzzleErrorMsgEl = document.getElementById('puzzle-error-msg');
+    const btnShiftUpEl = document.getElementById('btn-shift-up');
+    const btnShiftDownEl = document.getElementById('btn-shift-down');
+    const btnConfirmCipherEl = document.getElementById('btn-confirm-cipher');
+
+    const endScreenEl = document.getElementById('end-screen');
+    const endTitleEl = document.getElementById('end-title');
+    const endDescEl = document.getElementById('end-desc');
+    const btnRestartEl = document.getElementById('btn-restart');
+
+    /* ==========================================================================
+       CẬP NHẬT GIAO DIỆN CHỈ SỐ & KIỂM TRA ĐIỀU KIỆN THUA
+       ========================================================================== */
+    function updateUI() {
+      // 1. Điện thoại
+      batteryValEl.textContent = `${GameState.battery}%`;
+      if (GameState.battery < 5) {
+        phoneBadgeEl.classList.add('low-battery');
+      } else {
+        phoneBadgeEl.classList.remove('low-battery');
+      }
+
+      // 2. Triều đình
+      courtValEl.textContent = `${GameState.court}%`;
+      courtFillEl.style.width = `${Math.max(0, Math.min(100, GameState.court))}%`;
+
+      // 3. Mật thám Pháp
+      spyValEl.textContent = `${GameState.spy}%`;
+      spyFillEl.style.width = `${Math.max(0, Math.min(100, GameState.spy))}%`;
+    }
+
+    function checkInstantGameOver() {
+      if (GameState.mode === 'GAME_OVER') return true;
+
+      // Luật 1: Triều Đình về 0%
+      if (GameState.court <= 0) {
+        triggerGameOver(
+          false,
+          "Kinh Thành Thất Thủ!",
+          "Chỉ số Uy tín Triều Đình đã rơi về 0%. Triều đình Nguyễn hoàn toàn sụp đổ quyền lực, không còn khả năng đối trọng. Bạn bị phe bảo thủ cùng mật vụ Pháp bắt giữ!"
+        );
+        return true;
+      }
+
+      // Luật 2: Mật Thám Pháp lên 100%
+      if (GameState.spy >= 100) {
+        triggerGameOver(
+          false,
+          "Mật Thám Pháp Kiểm Soát Toàn Bộ!",
+          "Mật thám Pháp đã đạt 100% mức độ thâm nhập vào Kinh thành Huế. Toàn bộ mạng lưới liên lạc bị giăng bẫy, kế hoạch bí mật bị triệt phá hoàn toàn!"
+        );
+        return true;
+      }
+
+      // Luật 3: Pin điện thoại về <= 0%
+      if (GameState.battery <= 0) {
+        triggerGameOver(
+          false,
+          "Điện Thoại Sập Nguồn!",
+          "Pin điện thoại đã cạn kiệt (0%). Chiếc điện thoại xuyên không bị tắt nguồn vĩnh viễn, bạn mất đi nguồn tri thức và khả năng phân tích thời đại, bị thị vệ tống giam vào ngục tối!"
+        );
+        return true;
+      }
+
+      return false;
+    }
+
+    /* ==========================================================================
+       VẼ ĐỒ HỌA TRÊN CANVAS (ĐẠI NỘI HUẾ, ĐIỆN THÁI HÒA, NGỰ SỬ)
+       ========================================================================== */
+    function drawStar(cx, cy, spikes, outerRadius, innerRadius, color) {
+      let rot = Math.PI / 2 * 3;
+      let x = cx;
+      let y = cy;
+      const step = Math.PI / spikes;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - outerRadius);
+      for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * outerRadius;
+        y = cy + Math.sin(rot) * outerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+
+        x = cx + Math.cos(rot) * innerRadius;
+        y = cy + Math.sin(rot) * innerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+      }
+      ctx.lineTo(cx, cy - outerRadius);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function render() {
+      // 1. NỀN SÂN GẠCH ĐẠI NỘI (#d7ccc8)
+      ctx.fillStyle = '#d7ccc8';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Vẽ vân gạch Đại Nội cổ điển
+      ctx.strokeStyle = 'rgba(161, 136, 127, 0.45)';
+      ctx.lineWidth = 1.5;
+      const tileSize = 40;
+      for (let x = 0; x < canvas.width; x += tileSize) {
+        for (let y = 190; y < canvas.height; y += tileSize) {
+          ctx.strokeRect(x, y, tileSize, tileSize);
+          // Điểm xước ngẫu nhiên gạch Bát Tràng
+          if ((x + y) % 80 === 0) {
+            ctx.fillStyle = 'rgba(141, 110, 99, 0.2)';
+            ctx.fillRect(x + 5, y + 5, tileSize - 10, tileSize - 10);
+          }
+        }
+      }
+
+      // Con đường thần đạo lót đá hoa cương dẫn vào Điện Thái Hòa
+      const pathGrad = ctx.createLinearGradient(350, 0, 450, 0);
+      pathGrad.addColorStop(0, 'rgba(215, 204, 200, 0.7)');
+      pathGrad.addColorStop(0.5, 'rgba(238, 238, 238, 0.6)');
+      pathGrad.addColorStop(1, 'rgba(215, 204, 200, 0.7)');
+      ctx.fillStyle = pathGrad;
+      ctx.fillRect(350, 200, 100, 300);
+
+      ctx.strokeStyle = 'rgba(188, 170, 164, 0.8)';
+      for (let y = 200; y < canvas.height; y += 30) {
+        ctx.beginPath();
+        ctx.moveTo(350, y);
+        ctx.lineTo(450, y);
+        ctx.stroke();
+      }
+
+      // Thềm Rồng (Bậc đá rồng đá chầu)
+      ctx.fillStyle = '#9e9e9e';
+      ctx.fillRect(330, 195, 140, 15);
+      ctx.fillStyle = '#757575';
+      ctx.fillRect(340, 190, 120, 8);
+
+      // Đỉnh đồng hai bên thềm điện
+      [270, 530].forEach(bx => {
+        ctx.fillStyle = '#5d4037';
+        ctx.beginPath();
+        ctx.ellipse(bx, 215, 14, 18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(bx - 3, 195, 6, 4);
+      });
+
+      // 2. KHỐI ĐIỆN THÁI HÒA
+      const p = GameState.palace;
+
+      // Bóng đổ khối điện
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(p.x - 10, p.y + p.h, p.w + 20, 18);
+
+      // Tường chính màu đỏ cung đình (#8B0000)
+      ctx.fillStyle = p.wallColor;
+      ctx.fillRect(p.x, p.y + 45, p.w, p.h - 45);
+
+      // Các hàng cột gỗ sơn son thếp vàng
+      const colCount = 8;
+      const colStep = p.w / (colCount - 1);
+      for (let i = 0; i < colCount; i++) {
+        const cx = p.x + i * colStep;
+        ctx.fillStyle = '#5a0000';
+        ctx.fillRect(cx - 6, p.y + 45, 12, p.h - 45);
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(cx - 8, p.y + 45, 16, 5); // Chân đầu cột
+        ctx.fillRect(cx - 8, p.y + p.h - 6, 16, 6); // Đế cột
+      }
+
+      // Cửa chính giữa Điện Thái Hòa
+      ctx.fillStyle = '#3e160a';
+      ctx.fillRect(p.doorX, p.doorY, p.doorW, p.doorH);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(p.doorX, p.doorY, p.doorW, p.doorH);
+
+      // Cánh cửa bức bàn hoàng gia
+      ctx.fillStyle = '#2b0f07';
+      ctx.fillRect(p.doorX + 6, p.doorY + 6, (p.doorW - 16) / 2, p.doorH - 6);
+      ctx.fillRect(p.doorX + p.doorW / 2 + 2, p.doorY + 6, (p.doorW - 16) / 2, p.doorH - 6);
+
+      // Tay nắm cửa vòng đồng mạ vàng
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(p.doorX + 42, p.doorY + 40, 5, 0, Math.PI * 2);
+      ctx.arc(p.doorX + 58, p.doorY + 40, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hai Lính Thị Vệ đứng gác hai bên cửa điện
+      [315, 485].forEach((guardX, idx) => {
+        // Áo lính triều đình
+        ctx.fillStyle = idx === 0 ? '#b71c1c' : '#c62828';
+        ctx.fillRect(guardX - 8, 150, 16, 35);
+        // Nón dấu
+        ctx.fillStyle = '#ffd700';
+        ctx.beginPath();
+        ctx.arc(guardX, 142, 10, Math.PI, 0);
+        ctx.fill();
+        ctx.fillStyle = '#ff1744';
+        ctx.fillRect(guardX - 2, 130, 4, 12);
+        // Mặt
+        ctx.fillStyle = '#ffcc80';
+        ctx.beginPath();
+        ctx.arc(guardX, 146, 6, 0, Math.PI * 2);
+        ctx.fill();
+        // Giáo canh gác
+        ctx.strokeStyle = '#795548';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(guardX + 10, 120);
+        ctx.lineTo(guardX + 10, 190);
+        ctx.stroke();
+        ctx.fillStyle = '#cfd8dc';
+        ctx.beginPath();
+        ctx.moveTo(guardX + 10, 110);
+        ctx.lineTo(guardX + 13, 122);
+        ctx.lineTo(guardX + 7, 122);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      // MÁI VÀNG HOÀNG GIA (#FFD700) KIẾU TRÙNG THIỀM ĐIỆP ỐC
+      // Tầng mái dưới
+      ctx.fillStyle = p.roofColor;
+      ctx.beginPath();
+      ctx.moveTo(p.x - 30, p.y + 55);
+      ctx.quadraticCurveTo(p.x + p.w / 2, p.y + 40, p.x + p.w + 30, p.y + 55);
+      ctx.lineTo(p.x + p.w + 10, p.y + 25);
+      ctx.lineTo(p.x - 10, p.y + 25);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Cổ diêm ngăn tầng mái
+      ctx.fillStyle = '#8B0000';
+      ctx.fillRect(p.x + 30, p.y + 16, p.w - 60, 12);
+
+      // Tầng mái trên đỉnh
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.moveTo(p.x - 10, p.y + 20);
+      ctx.quadraticCurveTo(p.x + p.w / 2, p.y - 15, p.x + p.w + 10, p.y + 20);
+      ctx.lineTo(p.x + p.w - 30, p.y - 2);
+      ctx.lineTo(p.x + 30, p.y - 2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Đao mái rồng lượn hai đầu
+      ctx.fillStyle = '#ffab00';
+      ctx.beginPath();
+      ctx.arc(p.x - 25, p.y + 45, 10, 0, Math.PI * 1.5, true);
+      ctx.arc(p.x + p.w + 25, p.y + 45, 10, 0, Math.PI * 1.5, false);
+      ctx.fill();
+
+      // BIỂN HIỆU MÀU ĐEN CHỮ VÀNG GHI "ĐIỆN THÁI HÒA"
+      const signW = 160;
+      const signH = 34;
+      const signX = p.x + (p.w - signW) / 2;
+      const signY = p.y + 50;
+
+      // Khung biển hiệu màu đen
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(signX, signY, signW, signH);
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(signX, signY, signW, signH);
+      // Viền kép trang trí hoàng gia
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(signX + 3, signY + 3, signW - 6, signH - 6);
+
+      // Chữ vàng "ĐIỆN THÁI HÒA"
+      ctx.fillStyle = '#ffd700';
+      ctx.font = 'bold 15px "Cinzel", "Playfair Display", serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
+      ctx.shadowBlur = 5;
+      ctx.fillText("ĐIỆN THÁI HÒA", signX + signW / 2, signY + signH / 2 + 1);
+      ctx.shadowBlur = 0;
+
+      // 3. NHÂN VẬT CHÍNH (NGỰ SỬ)
+      const pl = GameState.player;
+
+      // Bóng đổ dưới chân nhân vật
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(pl.x, pl.y + pl.radius - 2, pl.radius * 0.9, pl.radius * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hình tròn màu đỏ (#ff1744)
+      ctx.fillStyle = pl.color;
+      ctx.beginPath();
+      ctx.arc(pl.x, pl.y, pl.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Viền vàng trang trọng
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Lõi ngôi sao vàng (5 cánh)
+      drawStar(pl.x, pl.y, 5, pl.radius * 0.58, pl.radius * 0.28, pl.starColor);
+
+      // Hiệu ứng phát sáng nhẹ của điện thoại trên tay
+      const time = Date.now() * 0.005;
+      ctx.fillStyle = `rgba(0, 230, 118, ${0.4 + 0.2 * Math.sin(time)})`;
+      ctx.beginPath();
+      ctx.arc(pl.x + 12, pl.y - 6, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    /* ==========================================================================
+       XỬ LÝ DI CHUYỂN & VA CHẠM CỨNG (COLLISION)
+       ========================================================================== */
+    function isNearDoor() {
+      const pl = GameState.player;
+      const doorCenterX = GameState.palace.doorX + GameState.palace.doorW / 2; // 400
+      const doorBottomY = GameState.palace.y + GameState.palace.h;             // 205
+      const dist = Math.hypot(pl.x - doorCenterX, pl.y - (doorBottomY + 25));
+      return dist <= 65;
+    }
+
+    function updatePlayerMovement() {
+      if (!GameState.canMove || GameState.mode !== 'EXPLORE') return;
+
+      const pl = GameState.player;
+      let dx = 0;
+      let dy = 0;
+
+      if (GameState.keys['ArrowUp'] || GameState.keys['KeyW']) dy -= pl.speed;
+      if (GameState.keys['ArrowDown'] || GameState.keys['KeyS']) dy += pl.speed;
+      if (GameState.keys['ArrowLeft'] || GameState.keys['KeyA']) dx -= pl.speed;
+      if (GameState.keys['ArrowRight'] || GameState.keys['KeyD']) dx += pl.speed;
+
+      // Chuẩn hóa đường chéo
+      if (dx !== 0 && dy !== 0) {
+        dx *= 0.7071;
+        dy *= 0.7071;
+      }
+
+      if (dx !== 0 || dy !== 0) {
+        if (Math.random() < 0.08) Sound.step();
+      }
+
+      const nextX = pl.x + dx;
+      const nextY = pl.y + dy;
+
+      // Giới hạn biên màn hình Canvas (800x500)
+      const clampedX = Math.max(pl.radius, Math.min(canvas.width - pl.radius, nextX));
+      const clampedY = Math.max(pl.radius, Math.min(canvas.height - pl.radius, nextY));
+
+      // XỬ LÝ VA CHẠM CỨNG VỚI ĐIỆN THÁI HÒA
+      // Khối Điện Thái Hòa nằm từ x: 80 đến x: 720, y: 0 đến y: 205
+      const p = GameState.palace;
+      const palaceLeft = p.x - pl.radius;
+      const palaceRight = p.x + p.w + pl.radius;
+      const palaceTop = 0;
+      const palaceBottom = p.y + p.h + pl.radius; // 205 + 18 = 223
+
+      let allowX = true;
+      let allowY = true;
+
+      // Kiểm tra trục X
+      if (clampedX > palaceLeft && clampedX < palaceRight && pl.y < palaceBottom) {
+        allowX = false;
+      }
+
+      // Kiểm tra trục Y
+      if (clampedY < palaceBottom && pl.x > palaceLeft && pl.x < palaceRight) {
+        allowY = false;
+      }
+
+      if (allowX) pl.x = clampedX;
+      if (allowY) pl.y = clampedY;
+
+      // Hiển thị gợi ý tương tác khi đứng sát cửa
+      if (isNearDoor()) {
+        interactHintEl.style.display = 'flex';
+      } else {
+        interactHintEl.style.display = 'none';
+      }
+    }
+
+    /* ==========================================================================
+       HỆ THỐNG KỊCH BẢN THOẠI & LỰA CHỌN (KỊCH BẢN NGỌ MÔN)
+       ========================================================================== */
+    function openDialogue() {
+      GameState.mode = 'DIALOGUE';
+      GameState.canMove = false;
+      interactHintEl.style.display = 'none';
+      dialogueBoxEl.style.display = 'flex';
+      Sound.dialogue();
+
+      showInitialDialogue();
+    }
+
+    function showInitialDialogue() {
+      dialogueSpeakerEl.className = 'dialogue-speaker-tag';
+      dialogueSpeakerEl.textContent = "Lính Thị Vệ Triều Đình";
+      dialogueContentEl.textContent = "Kẻ kia ăn mặc kỳ dị! Tay cầm vật phát sáng tà thuật gì thế kia? Ngươi có phải mật thám phương Tây cử đến không?!";
+
+      dialogueOptionsEl.innerHTML = '';
+
+      // Lựa chọn A
+      const btnA = document.createElement('button');
+      btnA.className = 'dialogue-btn';
+      btnA.innerHTML = `<strong>A.</strong> "Thưa ngài, tôi là sinh viên thời hiện đại bị xuyên không về đây, không có ý xấu!"`;
+      btnA.onclick = () => chooseOptionA();
+
+      // Lựa chọn B
+      const btnB = document.createElement('button');
+      btnB.className = 'dialogue-btn';
+      btnB.innerHTML = `<strong>B.</strong> "Tôi chỉ là một người dân nghèo đi lạc, xin các ngài tha mạng."`;
+      btnB.onclick = () => chooseOptionB();
+
+      // Lựa chọn C
+      const btnC = document.createElement('button');
+      btnC.className = 'dialogue-btn';
+      btnC.innerHTML = `<strong>C.</strong> "(Bật điện thoại tra cứu lịch sử triều đại để đối đáp - Tốn 5% Pin)"`;
+      btnC.onclick = () => chooseOptionC();
+
+      dialogueOptionsEl.appendChild(btnA);
+      dialogueOptionsEl.appendChild(btnB);
+      dialogueOptionsEl.appendChild(btnC);
+    }
+
+    // Lựa chọn A: Sinh viên xuyên không
+    function chooseOptionA() {
+      Sound.dialogue();
+      GameState.court -= 20;
+      GameState.spy += 10;
+      updateUI();
+
+      if (checkInstantGameOver()) return;
+
+      dialogueSpeakerEl.className = 'dialogue-speaker-tag';
+      dialogueSpeakerEl.textContent = "Lính Thị Vệ Triều Đình";
+      dialogueContentEl.textContent = "Hỗn xược! 'Sinh viên'? 'Xuyên không'? Ngươi dám dùng yêu ngôn ma quỷ hoặc loạn thềm điện hoàng cung sao?! Lũ mật thám giảo hoạt, bắt tống vào đại lao điều tra ngay!";
+
+      dialogueOptionsEl.innerHTML = '';
+      const btnContinue = document.createElement('button');
+      btnContinue.className = 'dialogue-btn btn-continue';
+      btnContinue.textContent = "TIẾP TỤC >>";
+      btnContinue.onclick = () => {
+        triggerGameOver(
+          false,
+          "Thua Cuộc (Bad Ending 1)",
+          "Bạn bị lính thị vệ bắt giam vào ngục tối vì nghi ngờ tà giáo phản nghịch. Chuyến phiêu lưu xuyên không của bạn chấm dứt trong u tối!"
+        );
+      };
+      dialogueOptionsEl.appendChild(btnContinue);
+    }
+
+    // Lựa chọn B: Người dân nghèo đi lạc
+    function chooseOptionB() {
+      Sound.dialogue();
+      GameState.court += 10;
+      updateUI();
+
+      if (checkInstantGameOver()) return;
+
+      dialogueSpeakerEl.className = 'dialogue-speaker-tag';
+      dialogueSpeakerEl.textContent = "Lính Thị Vệ Triều Đình";
+      dialogueContentEl.textContent = "Thấy ngươi ăn nói cung kính thật thà, cốt cách lại có phần sáng dạ. Đức Vua Duy Tân đang mật lệnh chiêu nạp nhân sĩ giải mã mật thư kháng Pháp. Hãy theo ta vào bái kiến Hoàng Thượng!";
+
+      dialogueOptionsEl.innerHTML = '';
+      const btnContinue = document.createElement('button');
+      btnContinue.className = 'dialogue-btn btn-continue';
+      btnContinue.textContent = "TIẾP TỤC (VÀO BÁI KIẾN ĐỨC VUA) >>";
+      btnContinue.onclick = () => {
+        dialogueBoxEl.style.display = 'none';
+        startCaesarPuzzle();
+      };
+      dialogueOptionsEl.appendChild(btnContinue);
+    }
+
+    // Lựa chọn C: Tra cứu Google (-5% Pin)
+    function chooseOptionC() {
+      Sound.dialogue();
+      GameState.battery -= 5;
+      updateUI();
+
+      if (GameState.battery <= 0) {
+        checkInstantGameOver();
+        return;
+      }
+
+      dialogueSpeakerEl.className = 'dialogue-speaker-tag speaker-phone';
+      dialogueSpeakerEl.textContent = "Điện thoại (Google)";
+      dialogueContentEl.textContent = "Hệ thống thông báo: Năm 1907, Vua Duy Tân lên ngôi khi mới 7 tuổi. Ngài là vị vua yêu nước, có tư tưởng canh tân sâu sắc và đang bí mật mưu tính khởi nghĩa cùng phong trào Quang Phục Hội chống thực dân Pháp...";
+
+      dialogueOptionsEl.innerHTML = '';
+
+      // Hiện Lựa chọn ẩn D
+      const btnD = document.createElement('button');
+      btnD.className = 'dialogue-btn btn-hidden-d';
+      btnD.innerHTML = `<strong>D (Lựa chọn Ẩn).</strong> "Dẫn chứng điển tích Nho giáo và tư tưởng canh tân để xin kiến diện đức vua"`;
+      btnD.onclick = () => chooseOptionD();
+
+      dialogueOptionsEl.appendChild(btnD);
+    }
+
+    // Lựa chọn ẩn D
+    function chooseOptionD() {
+      Sound.dialogue();
+      GameState.court += 30;
+      GameState.spy -= 10;
+      updateUI();
+
+      if (checkInstantGameOver()) return;
+
+      dialogueSpeakerEl.className = 'dialogue-speaker-tag';
+      dialogueSpeakerEl.textContent = "Lính Thị Vệ Triều Đình";
+      dialogueContentEl.textContent = "Lời lẽ cao minh, thấu suốt thời thế quốc gia! Không ngờ giữa buổi can qua lại gặp được bậc sĩ phu uyên bác thấu hiểu nỗi lòng đức kim thượng. Đức Vua Duy Tân đang cần người giải bức mật thư cơ mật. Mời tiên sinh theo ta vào nội điện!";
+
+      dialogueOptionsEl.innerHTML = '';
+      const btnContinue = document.createElement('button');
+      btnContinue.className = 'dialogue-btn btn-continue';
+      btnContinue.textContent = "TIẾP TỤC (VÀO DIỆN KIẾN VUA DUY TÂN) >>";
+      btnContinue.onclick = () => {
+        dialogueBoxEl.style.display = 'none';
+        startCaesarPuzzle();
+      };
+      dialogueOptionsEl.appendChild(btnContinue);
+    }
+
+    /* ==========================================================================
+       4. MINI-GAME GIẢI MẬT MÃ CAESAR (PUZZLEBOX)
+       ========================================================================== */
+    function caesarShiftChar(char, shift) {
+      // Dịch chuyển ngược theo chuẩn mã giải Caesar: K - 3 = H, X - 3 = U, H - 3 = E
+      const code = char.charCodeAt(0) - 65;
+      const newCode = (code - shift + 26) % 26;
+      return String.fromCharCode(65 + newCode);
+    }
+
+    function updateCipherDisplay() {
+      const s = GameState.cipher.shift;
+      const raw = GameState.cipher.raw; // "KXH"
+
+      const c0 = caesarShiftChar(raw[0], s);
+      const c1 = caesarShiftChar(raw[1], s);
+      const c2 = caesarShiftChar(raw[2], s);
+
+      card0El.textContent = c0;
+      card1El.textContent = c1;
+      card2El.textContent = c2;
+
+      shiftDisplayEl.textContent = `Độ dịch: ${s} bước`;
+      GameState.cipher.currentDecoded = `${c0}${c1}${c2}`;
+
+      // Highlight nếu khớp HUE
+      const isHue = GameState.cipher.currentDecoded === "HUE";
+      [card0El, card1El, card2El].forEach(card => {
+        if (isHue) {
+          card.style.color = '#ffd700';
+          card.style.borderColor = '#00e676';
+          card.style.boxShadow = '0 0 15px rgba(0, 230, 118, 0.7)';
+        } else {
+          card.style.color = '#ffffff';
+          card.style.borderColor = '#ffd700';
+          card.style.boxShadow = '0 6px 15px rgba(0, 0, 0, 0.7)';
+        }
+      });
+    }
+
+    function changeCipherShift(delta) {
+      Sound.shift();
+      let newShift = GameState.cipher.shift + delta;
+      if (newShift > 25) newShift = 0;
+      if (newShift < 0) newShift = 25;
+      GameState.cipher.shift = newShift;
+      updateCipherDisplay();
+      puzzleErrorMsgEl.textContent = '';
+    }
+
+    function startCaesarPuzzle() {
+      GameState.mode = 'PUZZLE';
+      GameState.canMove = false;
+      GameState.cipher.shift = 0;
+      puzzleErrorMsgEl.textContent = '';
+      puzzleBoxEl.style.display = 'flex';
+      updateCipherDisplay();
+    }
+
+    function confirmCaesarDecryption() {
+      Sound.dialogue();
+      const decoded = GameState.cipher.currentDecoded;
+
+      // Kiểm tra chính xác từ khóa "HUE" (hoặc bước shift = 3)
+      if (decoded === "HUE") {
+        puzzleBoxEl.style.display = 'none';
+        Sound.victory();
+        triggerGameOver(
+          true,
+          "Chiến Thắng Rực Rỡ (True Ending)!",
+          "Mật thư đã được giải mã chính xác: 'H U E' (Kinh Đô Huế)! Đức Vua Duy Tân và phong trào Quang Phục Hội đã nắm bắt được cứ điểm liên lạc bí mật. Nhờ sự am hiểu và chiếc điện thoại thần kỳ của bạn, kế hoạch giải phóng giữ kín được cơ mật, mở ra thắng lợi vang dội cho phong trào kháng Pháp!"
+        );
+      } else {
+        // Sai mật mã -> Trừ 5% Pin, báo lỗi và cho giải lại
+        Sound.error();
+        GameState.battery -= 5;
+        updateUI();
+
+        if (GameState.battery <= 0) {
+          puzzleBoxEl.style.display = 'none';
+          triggerGameOver(
+            false,
+            "Điện Thoại Sập Nguồn Khi Giải Mã!",
+            "Bạn đã thử sai mật mã nhiều lần khiến điện thoại cạn kiệt năng lượng (0% Pin). Thiết bị phát ra tiếng bíp rồi tắt ngấm. Mất đi công cụ thời hiện đại, bạn không thể chứng minh năng lực và bị lính thị vệ tống giam!"
+          );
+        } else {
+          puzzleErrorMsgEl.textContent = `⚠️ Mật mã chưa đúng (Hiện tại: "${decoded}")! Tốn 5% Pin để dò lại (Còn ${GameState.battery}%). Hãy thử lại!`;
+          // Rung nhẹ khung giải đố
+          puzzleBoxEl.style.transform = 'translate(-50%, -50%) scale(0.98)';
+          setTimeout(() => {
+            puzzleBoxEl.style.transform = 'translate(-50%, -50%) scale(1)';
+          }, 150);
+        }
+      }
+    }
+
+    /* ==========================================================================
+       5. MODAL KẾT THÚC & KHỞI TẠO LẠI (RESTART)
+       ========================================================================== */
+    function triggerGameOver(isWin, title, desc) {
+      GameState.mode = 'GAME_OVER';
+      GameState.canMove = false;
+      interactHintEl.style.display = 'none';
+      dialogueBoxEl.style.display = 'none';
+      puzzleBoxEl.style.display = 'none';
+
+      endScreenEl.style.display = 'flex';
+      endTitleEl.textContent = title;
+      endDescEl.textContent = desc;
+
+      if (isWin) {
+        endTitleEl.className = 'end-title victory';
+        Sound.victory();
+      } else {
+        endTitleEl.className = 'end-title defeat';
+        Sound.defeat();
+      }
+    }
+
+    function resetGame() {
+      GameState.battery = 20;
+      GameState.court = 50;
+      GameState.spy = 30;
+      GameState.mode = 'EXPLORE';
+      GameState.canMove = true;
+
+      GameState.player.x = 400;
+      GameState.player.y = 380;
+
+      GameState.cipher.shift = 0;
+      GameState.cipher.currentDecoded = "KXH";
+
+      endScreenEl.style.display = 'none';
+      dialogueBoxEl.style.display = 'none';
+      puzzleBoxEl.style.display = 'none';
+      interactHintEl.style.display = 'none';
+
+      updateUI();
+    }
+
+    /* ==========================================================================
+       LẮNG NGHE SỰ KIỆN PHÍM BẤM & TƯƠNG TÁC
+       ========================================================================== */
+    window.addEventListener('keydown', (e) => {
+      Sound.init();
+
+      GameState.keys[e.code] = true;
+
+      // Xử lý phím Space khi đứng gần cửa điện
+      if (e.code === 'Space') {
+        if (GameState.mode === 'EXPLORE' && isNearDoor()) {
+          e.preventDefault();
+          openDialogue();
+        }
+      }
+
+      // Xử lý phím mũi tên Lên / Xuống trong Puzzle Caesar
+      if (GameState.mode === 'PUZZLE') {
+        if (e.code === 'ArrowUp') {
+          e.preventDefault();
+          changeCipherShift(1);
+        } else if (e.code === 'ArrowDown') {
+          e.preventDefault();
+          changeCipherShift(-1);
+        } else if (e.code === 'Enter') {
+          e.preventDefault();
+          confirmCaesarDecryption();
+        }
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      GameState.keys[e.code] = false;
+    });
+
+    // Các nút bấm chuột
+    btnShiftUpEl.addEventListener('click', () => {
+      Sound.init();
+      changeCipherShift(1);
+    });
+
+    btnShiftDownEl.addEventListener('click', () => {
+      Sound.init();
+      changeCipherShift(-1);
+    });
+
+    btnConfirmCipherEl.addEventListener('click', () => {
+      Sound.init();
+      confirmCaesarDecryption();
+    });
+
+    btnRestartEl.addEventListener('click', () => {
+      Sound.init();
+      resetGame();
+    });
+
+    // Kích hoạt âm thanh khi click màn hình
+    document.addEventListener('click', () => {
+      Sound.init();
+    }, { once: true });
+
+    /* ==========================================================================
+       VÒNG LẶP CHÍNH (GAME LOOP)
+       ========================================================================== */
+    function gameLoop() {
+      updatePlayerMovement();
+      render();
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Khởi động giao diện ban đầu
+    updateUI();
+    requestAnimationFrame(gameLoop);
+  </script>
+</body>
+</html>
